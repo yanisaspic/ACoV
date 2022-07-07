@@ -55,3 +55,10 @@ cell_snapshot_k_digits = 4
         </data>
 
 """
+
+
+    ### should the parser compute implicit geometrical properties ? ###
+    # + volume_ratio : volume of an object (i.e. single cell or tissue) divided by the volume of the embryo
+    # + total_surface : sum of all the contact surfaces (including the one with the exterior) of an object
+    # + surface_ratio : contact surface shared by 2 objects divided by the total surface of the 1st object
+get_implicit_geometry = False
