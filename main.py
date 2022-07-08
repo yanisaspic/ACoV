@@ -3,10 +3,7 @@ Main ACoV script called in the command line with positional arguments to accompl
 Command line arguments are described in the main_settings script.
 _______________
 
-    + parse: store the anatomical properties of embryos into .xlsx files from .xml segmentation files
-    + alignment: applies a voxelsize and a time correction on the embryos
-    + matrix: converts the .xlsx files into cell composition matrices
-    + 
+    + interactive approach using argparse and the command line
 _______________
 
 @ ASLOUDJ Yanis
@@ -26,17 +23,33 @@ argparser = argparse.ArgumentParser(description=argparser_description, formatter
 argparser.add_argument('task', help=task_help)
 argparser.add_argument('-g', '--geometry', action='store_true', help=geometry_help)
 
+    
+    ### command-line interpreter ###
 
-    ### ACOB run ###
+def interpret_command_line(argument_parser):
+    """
+    # Description
+    ---
+    Parses the arguments on the command line to identify a specific task, and fulfill it.
 
-optional_args = {'parse': ['geometry'], 'align': ['geometry']}
-command_line_args = argparser.parse_args()
-fun_name = command_line_args.task
-fun = globals()[fun_name]
-fun_args_names = []
-for arg in optional_args[fun_name]:
-    fun_args_names.append(arg)
-fun_args = []
-for arg in fun_args_names:
-    fun_args.append(command_line_args.__dict__[arg])
-fun(*fun_args)
+    # Argument(s)
+    ---
+        `argument_parser` (argparse.ArgumentParser object).
+    """
+    command_line_arguments = argument_parser.parse_args()
+    task_name = command_line_arguments.task
+    task_function = globals()[command_line_arguments.task]
+
+    function_arguments = []
+    try:
+        for arg in task_specific_optional_arguments[task_name]:
+            function_arguments.append(command_line_arguments.__dict__[arg])
+    except KeyError:
+        pass
+    
+    task_function(*function_arguments)
+
+
+    ### ACoV ###
+
+interpret_command_line(argparser)

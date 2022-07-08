@@ -3,11 +3,20 @@ Global variables called in the script main.py.
 _______________
 
     + ACoV documentation for the command line help
+    + task-specific optional arguments
 _______________
 
 @ ASLOUDJ Yanis
 07/08/2022
 """
+
+
+    ### ordered task-specific optional arguments ###
+
+task_specific_optional_arguments = {
+    'parse': ['geometry'], 
+    'align': ['geometry']}
+
 
     ### command-line arguments docstrings ###
 

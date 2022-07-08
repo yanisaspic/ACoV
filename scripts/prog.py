@@ -36,7 +36,7 @@ def parse(geometry=False):
         file_start = time()
         print(f'\tCurrently parsing {filename}...')
         embryo_name = filename.split('.')[0]
-        data = parse_xml_completely(f'data/xml/{filename}')
+        data = parse_xml_completely(f'data/xml/{filename}', geometry)
         save_multi_resolution_data(data, f'data/xlsx/{embryo_name}.xlsx')
         rename(f'data/xml/{filename}', f'data/used/{filename}')
         print(f'\t\t-> done in {round(time() - file_start)} seconds.')
