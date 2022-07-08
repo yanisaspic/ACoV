@@ -1,2 +1,2 @@
-# ACOB
-Ascidian Cell cOmposition variaBility
+# ACoV
+Ascidian Cell cOmposition Variability
