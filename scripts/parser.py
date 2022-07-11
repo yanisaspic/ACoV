@@ -593,7 +593,7 @@ def parse_xml_completely(filename, geometry=False):
     data = xml_to_dict(filename)
     sort_by_timepoint(data)
 
-    for (resolution, fun) in [('tissue', get_cell_tissue), ('cell', get_cell_name)]:
+    for (resolution, fun) in [('cell', get_cell_name), ('tissue', get_cell_tissue)]:
         output[resolution] = {'global': frame_sub_resolution_global(data, fun), 'contacts': frame_sub_resolution_contacts(data, fun)}
     output['embryo'] = frame_embryo_resolution_global(*output[resolution].values())
 

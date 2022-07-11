@@ -20,8 +20,8 @@ task_specific_optional_arguments = {
 
     ### command-line arguments docstrings ###
 
-argparser_description="""Explore the embryogenesis cell composition variability from segmented embryos.
-Using a binary matrix-based approach, multiple figures can be generated to study this variability.
+argparser_description="""Explore the embryogenesis cell division variability from segmented embryos.
+Using a matrix-based approach, multiple figures can be generated to study this variability.
 Data pre-processing tasks are available and can be re-used to start studying the geometry variability. :-)
 """
 task_help = """{parse, align, matrix, preprocess}
@@ -29,10 +29,13 @@ task_help = """{parse, align, matrix, preprocess}
 parse       Stores the anatomical properties of embryos into multi-resolution .xlsx files 
             with human-readable objects and time points. Requires .xml segmentation files.
 
-align       Align the embryos temporally and possibly spatially to facilitate comparisons. 
+align       Aligns the embryos temporally and possibly spatially to facilitate comparisons. 
             Minutes post-fertilization are computed instead of time points.
 
-preprocess  Parse, align and matrix task consecutively.
+matrix      Generates cell count matrices from aligned .xlsx files.
+            The cell division variability computation requires these matrices. 
+
+preprocess  Completes the parse, align and matrix tasks consecutively.
 """
 geometry_help = """{parse, align, preprocess}
 

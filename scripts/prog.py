@@ -2,17 +2,15 @@
 API called by the script main.py to fulfill the tasks handled by ACoV.
 _______________
 
-    + parse: store the anatomical properties of embryos into .xlsx files from .xml segmentation files
-    + align: 
-_______________
-
 @ ASLOUDJ Yanis
 07/08/2022
 """
 
 
 from scripts.parser import parse_xml_completely, save_multi_resolution_data
-from scripts.alignment import apply_voxelsize_correction, apply_temporal_alignment
+from scripts.alignment import apply_voxelsize_correction, apply_temporal_alignment, concatenate_unique_resolution_data
+from scripts.matrix import get_cell_count_matrices, save_cell_count_matrices
+from scripts.graphics import *
 
 from os import listdir, rename
 from time import time
@@ -72,3 +70,37 @@ def align(geometry=False):
     print(f'\t\t-> done in {round(time() - start_temporal)} seconds.')
 
     print(f'{total} .xlsx files aligned in {round(time() - start)} seconds.')
+    temporal_alignment_figure('data/xlsx', 'figures')
+
+def matrix():
+    """
+    # Description
+    ---
+    Generates cell composition matrices from the .xlsx files.
+    """
+    start = time()
+    xlsx_files = listdir('data/xlsx')
+    total = len(xlsx_files)
+    print(f'{total} .xlsx files ready to be matrixed:')
+
+    for resolution in ['cell', 'tissue']:
+        sub_resolution_data = concatenate_unique_resolution_data('data/xlsx', resolution)
+        matrices = get_cell_count_matrices(sub_resolution_data)
+        for label, time_axis in {'ecc': 'embryo_cell_count', 'mpf': 'minutes_post_fertilization'}.items():
+            save_cell_count_matrices(matrices[time_axis], f'data/mat/{resolution}_{label}')
+
+    print(f'{total} .xlsx files matrixed in {round(time() - start)} seconds.')
+
+def preprocess(geometry=False):
+    """
+    # Description
+    ---
+    Completes the parse, align and matrix tasks consecutively.
+
+    # Argument(s)
+    ---
+        `geometry` (bool): cf. parse or align.
+    """
+    parse(geometry)
+    align(geometry)
+    matrix()

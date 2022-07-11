@@ -20,7 +20,7 @@ from sklearn.linear_model import RANSACRegressor
 from os import listdir
 
 
-def concatenate_embryo_resolution_data(xlsx_folder):
+def concatenate_unique_resolution_data(xlsx_folder, resolution='embryo'):
     """
     # Description
     ---
@@ -30,10 +30,11 @@ def concatenate_embryo_resolution_data(xlsx_folder):
     # Argument(s)
     ---
         `xlsx_folder` (str): name of the folder containing the parsed segmented embryos.
+        `resolution` (str): name of the .xlsx sheet to concatenate. Defaults to 'embryo'.
 
     # Usage
     ---
-    >>> all_embryo_resolution_data = concatenate_embryo_resolution_data('xlsx')
+    >>> all_embryo_resolution_data = concatenate_unique_resolution_data('xlsx')
     >>> print(all_embryo_resolution_data)
     ...    tp  object    volume  total_surface  cell_count     embryo
         0    0  embryo  67400259   9.063063e+05          46  Astec-pm3
@@ -51,7 +52,7 @@ def concatenate_embryo_resolution_data(xlsx_folder):
     embryo_resolution_data = []
     for filename in listdir(xlsx_folder):
         embryo_name = filename.split('.')[0]
-        individual_embryo_resolution_data = pd.read_excel(f'{xlsx_folder}/{filename}', engine='openpyxl', sheet_name='embryo')
+        individual_embryo_resolution_data = pd.read_excel(f'{xlsx_folder}/{filename}', engine='openpyxl', sheet_name=resolution)
         individual_embryo_resolution_data['embryo'] = embryo_name
         embryo_resolution_data.append(individual_embryo_resolution_data)
     return pd.concat(embryo_resolution_data).reset_index(drop=True)
@@ -66,11 +67,11 @@ def get_volume_regression_coefficients(embryo_resolution_data):
 
     # Argument(s)
     ---
-        `embryo_resolution_data` (pandas df): data structure generated using concatenate_embryo_resolution_data().
+        `embryo_resolution_data` (pandas df): data structure generated using concatenate_unique_resolution_data().
 
     # Usage
     ---
-    >>> data = concatenate_embryo_resolution_data('xlsx')
+    >>> data = concatenate_unique_resolution_data('xlsx')
     >>> print(get_volume_regression_coefficients(data))
     >>> print(get_volume_coefficients(data['embryo']))
     ... {'Astec-pm7': (-29805.92158159059, 74225682.50753953), ... 
@@ -97,12 +98,12 @@ def get_voxelsize_correction(embryo_resolution_data, target_volume=target_volume
     
     # Argument(s)
     ---
-        `embryo_resolution_data` (pandas df): data structure generated using concatenate_embryo_resolution_data().
+        `embryo_resolution_data` (pandas df): data structure generated using concatenate_unique_resolution_data().
         `target_volume` (numerical): value of the embryo volume after alignment.
 
     # Usage
     ---
-    >>> data = concatenate_embryo_resolution_data('xlsx')
+    >>> data = concatenate_unique_resolution_data('xlsx')
     >>> print(get_voxelsize_correction(data)['Astec-pm7'])
     ... {4: 0.23812308016809025, 5: 0.23815449069993436, ... 82: 0.2406240861870154}
     """
@@ -128,7 +129,7 @@ def apply_voxelsize_correction(xlsx_folder):
     ---
         `xlsx_folder` (str): name of the folder containing the parsed segmented embryos.
     """
-    embryo_resolution_data = concatenate_embryo_resolution_data(xlsx_folder)
+    embryo_resolution_data = concatenate_unique_resolution_data(xlsx_folder)
     voxelsize_correction = get_voxelsize_correction(embryo_resolution_data)
 
     for filename in listdir(xlsx_folder):
@@ -210,12 +211,12 @@ def get_temporal_coefficients(embryo_resolution_data, reference_embryo_name=refe
     
     # Argument(s)
     ---
-        `embryo_resolution_data` (pandas df): data structure generated using concatenate_embryo_resolution_data().
+        `embryo_resolution_data` (pandas df): data structure generated using concatenate_unique_resolution_data().
         `reference_embryo_name` (str): name of the embryo used as reference.
 
     # Usage
     ---
-    >>> data = concatenate_embryo_resolution_data('xlsx')
+    >>> data = concatenate_unique_resolution_data('xlsx')
     >>> print(get_temporal_coefficients(data))
     ... {'Astec-pm7': (0.831013049678967, -9.799705044691862), ... 'Astec-pm8': (1.0, 0.0)}
     """
@@ -239,7 +240,7 @@ def apply_temporal_alignment(xlsx_folder, reference_embryo=reference_embryo):
         `xlsx_folder` (str): name of the folder containing the parsed segmented embryos.
         `reference_embryo` (dict): metadata about the reference embryo.    
     """
-    embryo_resolution_data = concatenate_embryo_resolution_data(xlsx_folder)
+    embryo_resolution_data = concatenate_unique_resolution_data(xlsx_folder)
     coefficients = get_temporal_coefficients(embryo_resolution_data)
 
     for filename in listdir(xlsx_folder):
