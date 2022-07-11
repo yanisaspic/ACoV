@@ -9,5 +9,3 @@ _______________
 @ ASLOUDJ Yanis
 07/11/2022
 """
-
-pairwise_distance_methods = []

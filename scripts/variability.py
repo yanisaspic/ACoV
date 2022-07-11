@@ -14,6 +14,7 @@ _______________
 
 
 import pandas as pd
+import numpy as np
 from mlxtend.preprocessing import TransactionEncoder
 
 
@@ -53,26 +54,27 @@ def frame_embryo_coexistence(matrices_dict):
 
     # Usage
     ---
-    >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None)
+    >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
     >>> print(frame_embryo_coexistence(data))
-    ...            43   44   45   46   ...  383  384  385  386
-        Astec-pm1    0    0    0    0  ...    1    1    1    1
-        Astec-pm3    0    0    0    1  ...    0    0    0    0
-        Astec-pm4    1    1    1    1  ...    0    0    0    0
-        Astec-pm5    0    0    0    0  ...    0    0    0    0
-        Astec-pm7    1    1    1    1  ...    0    0    0    0
-        Astec-pm8    0    0    0    0  ...    1    1    1    1
-        Astec-pm9    0    0    0    0  ...    0    0    0    0
+    ...        35   36   37   ...  695  696  697
+    Astec-pm3    0    0    0  ...    0    0    0
+    Astec-pm4    1    1    1  ...    0    0    0
+    Astec-pm8    0    0    0  ...    0    0    0
+    Astec-pm7    0    0    0  ...    0    0    0
+    Louis        1    1    1  ...    1    1    1
+    Astec-pm1    0    0    0  ...    1    1    1
+    Astec-pm9    0    0    0  ...    0    0    0
+    Astec-pm5    0    0    0  ...    0    0    0
     """
     coexistence = one_hot_encode(list(map( lambda matrix: list(matrix.columns), matrices_dict.values() )))
     coexistence.index = matrices_dict.keys()
     return coexistence.loc[:, coexistence.sum()>=2]
 
-def get_distances_row(matrices_dict, pairwise_distance_method=pairwise_distance_method, aggregate_distance_method=aggregate_distance_method):
+def get_distances_row(matrices_dict, pairwise_distance_method='cityblock', aggregate_distance_method='mean'):
     """
     # Description
     ---
-    Returns a dataframe 
+    Returns a pandas Series corresponding to 
     """
 
 def get_abundance_matrix(cell_matrices_dict):
@@ -89,15 +91,22 @@ def get_abundance_matrix(cell_matrices_dict):
 
     # Usage
     ---
-    >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None)
+    >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
     >>> print(get_abundance_matrix(data))
     ...
     """
     abundance = {}
+    embryo_coexistence = frame_embryo_coexistence(cell_matrices_dict)
+    time_points = embryo_coexistence.columns
+
     for binary_matrix in cell_matrices_dict.values():
-        for time in binary_matrix.columns:
-            abundance[time] = abundance.get(time, pd.Series).add(binary_matrix[time])
+        print(abundance.get(35, np.array([0] * len(time_points))))
+        for time in time_points:
+            abundance[time] = abundance.get(time, np.array([0] * len(time_points))) + np.array(binary_matrix[time])
     return pd.DataFrame.from_records(abundance)
+
+data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
+print(get_abundance_matrix(data))
 
 def get_evenness_row(abundance_matrix, ):
     """
