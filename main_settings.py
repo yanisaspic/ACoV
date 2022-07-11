@@ -15,7 +15,8 @@ _______________
 
 task_specific_optional_arguments = {
     'parse': ['geometry'], 
-    'align': ['geometry']}
+    'align': ['geometry'],
+    'preprocess': ['geometry']}
 
 
     ### command-line arguments docstrings ###
@@ -24,6 +25,7 @@ argparser_description="""Explore the embryogenesis cell division variability fro
 Using a matrix-based approach, multiple figures can be generated to study this variability.
 Data pre-processing tasks are available and can be re-used to start studying the geometry variability. :-)
 """
+
 task_help = """{parse, align, matrix, preprocess}
 
 parse       Stores the anatomical properties of embryos into multi-resolution .xlsx files 
@@ -37,6 +39,7 @@ matrix      Generates cell count matrices from aligned .xlsx files.
 
 preprocess  Completes the parse, align and matrix tasks consecutively.
 """
+
 geometry_help = """{parse, align, preprocess}
 
 [parse]         Also computes implicit geometrical properties: 

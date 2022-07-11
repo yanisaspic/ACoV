@@ -107,8 +107,7 @@ def get_cell_count_matrices(sub_resolution_data):
     >>> cell_resolution_data = concatenate_unique_resolution_data('xlsx', 'cell')
     >>> matrices = get_cell_count_matrices(cell_resolution_data)
     >>> print(matrices['embryo_cell_count']['Astec-pm8'])
-    ...embryo_cell_count  64   65   66   ...  395  396  397
-        object                           ...                                                                           
+    ... embryo_cell_count  64   65   66   ...  395  396  397                                                       
         A10.25*            0.0  0.0  0.0 ...  1.0  1.0  1.0
         A10.25_            0.0  0.0  0.0 ...  1.0  1.0  1.0
         A10.26*            0.0  0.0  0.0 ...  1.0  1.0  1.0
@@ -128,6 +127,7 @@ def get_cell_count_matrices(sub_resolution_data):
             matrix = fill_dataframe_rows(matrix, missing_objects)
             matrix = fill_dataframe_columns(matrix)
             matrices[time_axis][embryo_name] = matrix.fillna(0)
+            matrix.index.name = None
 
     return matrices
 

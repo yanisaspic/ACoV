@@ -62,7 +62,7 @@ def align(geometry=False):
         start_voxelsize = time()
         print('\tAlignment of the voxelsize...')
         apply_voxelsize_correction('data/xlsx')
-        print(f'\t\t-> done in {round(time() - start_voxelsize())} seconds.')
+        print(f'\t\t-> done in {round(time() - start_voxelsize)} seconds.')
     
     start_temporal = time()
     print('\tAlignment of the growth rate...')
