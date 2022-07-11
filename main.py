@@ -12,7 +12,7 @@ _______________
 
 
 from main_settings import *
-from scripts.prog import parse
+from scripts.prog import *
 
 import argparse
 
