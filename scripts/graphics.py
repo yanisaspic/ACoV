@@ -11,7 +11,7 @@ _______________
 """
 
 
-# from scripts.alignment import concatenate_unique_resolution_data
+from scripts.alignment import concatenate_unique_resolution_data
 
 import seaborn as sns
 import matplotlib.pyplot as plt
