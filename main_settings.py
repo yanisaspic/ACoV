@@ -26,7 +26,7 @@ Using a matrix-based approach, multiple figures can be generated to study this v
 Data pre-processing tasks are available and can be re-used to start studying the geometry variability. :-)
 """
 
-task_help = """{parse, align, matrix, preprocess}
+task_help = """{parse, align, matrix, preprocess, plot, all}
 
 parse       Stores the anatomical properties of embryos into multi-resolution .xlsx files 
             with human-readable objects and time points. Requires .xml segmentation files.
@@ -38,6 +38,10 @@ matrix      Generates cell count matrices from aligned .xlsx files.
             The cell division variability computation requires these matrices. 
 
 preprocess  Completes the parse, align and matrix tasks consecutively.
+
+plot        Generates figures to explore the variability from the computed matrices.
+
+all         Completes the preprocess and plot tasks consecutively.
 """
 
 geometry_help = """{parse, align, preprocess}

@@ -11,7 +11,7 @@ _______________
 """
 
 
-from scripts.alignment import concatenate_unique_resolution_data
+# from scripts.alignment import concatenate_unique_resolution_data
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -29,7 +29,7 @@ def temporal_alignment_figure(xlsx_folder, figure_folder):
         `figure_folder` (str): name of the folder where the figures are saved.
     """
     sns.set()
-    fig, axs = plt.subplots(1, 2, figsize=(15,15))
+    fig, axs = plt.subplots(1, 2, figsize=(12,12))
     embryo_resolution_data = concatenate_unique_resolution_data(xlsx_folder)
     time_axes = ['tp', 'minutes_post_fertilization']
 
@@ -39,3 +39,36 @@ def temporal_alignment_figure(xlsx_folder, figure_folder):
     fig.suptitle("Temporal alignment of the embryos.", fontsize=24)
     fig.tight_layout()
     plt.savefig(f'{figure_folder}/temporal_alignment.png')
+
+def lineplot_variability(variability_dataframe, x_axis, y_axis, filename, hue=None):
+    """
+    # Description
+    ---
+    Generates a lineplot with the variability as y-axis and a proxy of time as the x-axis.
+    The input dataframe has time as columns and a modality of variability (e.g. calculation method or tissue subgroup) as rows.
+    If the dataframe has multiple rows, each modality is plotted in a unique color.
+
+    # Argument(s)
+    ---
+        `variability_dataframe` (pandas df): df with time as columns and a modality of variability as row. 
+        `filename` (str): path to the generated figure.
+    """
+    sns.set()
+    fig, axs = plt.subplots(figsize=(12,12))
+    try:
+        sns.lineplot(data=variability_dataframe, x=x_axis, y=y_axis, hue=hue, ax=axs)
+    except ValueError:
+        sns.lineplot(data=variability_dataframe, x=x_axis, y=y_axis, ax=axs)
+    fig.tight_layout()
+    plt.savefig(filename)
+
+def plot_heatmap_distances(distances_matrix, filename):
+    """
+    # Description
+    ---
+    Plots a heatmap of relative distances.
+    """
+    fig, axs = plt.subplots(figsize=(12, 12))
+    sns.heatmap(distances_matrix, cmap='coolwarm', fmt='g', ax=axs)
+    fig.tight_layout()
+    plt.savefig(filename)

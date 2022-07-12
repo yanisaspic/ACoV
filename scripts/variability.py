@@ -13,7 +13,7 @@ _______________
 """
 
 
-from utils.variability_settings import *
+from scripts.utils.variability_settings import *
 
 import pandas as pd
 import scipy.spatial.distance as ssd
@@ -91,7 +91,9 @@ def get_distance_row(matrices_dict, pairwise_distance_method='cityblock', aggreg
     ---
     >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
     >>> print(get_distance_row(data))
-    ...
+    ... time       35   36   37   ...   695   696   697
+        method                    ...                                                                                    
+        cityblock  9.0  9.0  9.0  ...  51.0  50.0  48.0
     """
     pairwise_distance_rows = []
     embryo_coexistence = frame_embryo_coexistence(matrices_dict)
@@ -102,7 +104,7 @@ def get_distance_row(matrices_dict, pairwise_distance_method='cityblock', aggreg
 
         for embryo_pair in combinations(embryo_pool_at_time, 2):
             u, v = matrices_dict[embryo_pair[0]][time], matrices_dict[embryo_pair[1]][time]
-            row = {'time': time, 'distance': ssd.pdist((u, v), pairwise_distance_method), 'method': pairwise_distance_method}
+            row = {'time': time, 'distance': ssd.pdist((u, v), pairwise_distance_method)[0], 'method': pairwise_distance_method}
             pairwise_distance_rows.append(row)
 
     pairwise_distance_df = pd.DataFrame.from_records(pairwise_distance_rows)
@@ -125,18 +127,23 @@ def get_abundance_matrix(cell_matrices_dict):
     ---
     >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
     >>> print(get_abundance_matrix(data).head())
-    ...
+    ...          35   36   37   ...  695  696  697
+        A10.25*    0    0    0  ...    1    1    1
+        A10.25_    0    0    0  ...    1    1    1
+        A10.26*    0    0    0  ...    1    1    1
+        A10.26_    0    0    0  ...    2    2    2
+        A10.27*    0    0    0  ...    0    0    0
     """
     abundance = {}
     embryo_coexistence = frame_embryo_coexistence(cell_matrices_dict)
     time_points = embryo_coexistence.columns
 
-    for binary_matrix in cell_matrices_dict.values():
-        for time in time_points:
+    for time in time_points:
+        for embryo_name in embryo_coexistence[time][embryo_coexistence[time]==1].index:
             try:
-                abundance[time] += binary_matrix[time]
+                abundance[time] += cell_matrices_dict[embryo_name][time]
             except KeyError:
-                abundance[time] = binary_matrix[time]
+                abundance[time] = cell_matrices_dict[embryo_name][time].copy()
 
     return pd.DataFrame.from_records(abundance)
 
@@ -158,12 +165,14 @@ def get_evenness_row(cell_matrices_dict, evenness_index='simpson_e'):
     ---
     >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
     >>> print(get_evenness_row(data))
-    ...
+    ... time            35        36        37   ...       695       696       697
+        method                                   ...                                                                                
+        simpson_e  0.945053  0.945053  0.945053  ...  0.914029  0.914806  0.915896
     """
     abundance = get_abundance_matrix(cell_matrices_dict)
     evenness_rows = []
     for time in abundance.columns:
-        evenness_rows.append({'time': time, 'evenness': alpha_diversity(evenness_index, abundance[time]), 'method': evenness_index})
+        evenness_rows.append({'time': time, 'evenness': alpha_diversity(evenness_index, abundance[time])[0], 'method': evenness_index})
     evenness_df = pd.DataFrame.from_records(evenness_rows)
     return evenness_df.pivot_table(values='evenness', index='method', columns='time')
 
@@ -209,8 +218,20 @@ def get_variability_dataframe(cell_matrices_dict, variability_fun, variability_m
     # Usage
     ---
     >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
-    >>> print(get_variability_dataframe(data, get_distance_row, pairwise_distance_pool).head())
-    ...
+    >>> print(get_variability_dataframe(data, get_distance_row, distance_pool).head())
+    ... time            35        36        37   ...       695       696       697
+        method                                   ...                                                                                
+        canberra   0.069337  0.069337  0.069337  ...  0.392912  0.385208  0.369800
+        cityblock  0.069337  0.069337  0.069337  ...  0.392912  0.385208  0.369800
+        euclidean  0.265642  0.265642  0.265642  ...  0.632353  0.626123  0.613473
+        hamming    0.069337  0.069337  0.069337  ...  0.392912  0.385208  0.369800
+        matching   0.069337  0.069337  0.069337  ...  0.392912  0.385208  0.369800
+    >>> print(get_variability_dataframe(data, get_evenness_row, evenness_pool).head())
+    ... time            35        36   ...       695       696       697
+        method                         ...                                                                                
+        simpson_e  0.774074  0.774074  ...  0.646514  0.649708  0.654189
+        heip_e     0.724312  0.724312  ...  0.640259  0.638500  0.661940
+        pielou_e   0.573649  0.573649  ...  0.572947  0.569100  0.602267
     """
     variability_rows = []
     for method in variability_methods_pool:
@@ -218,7 +239,7 @@ def get_variability_dataframe(cell_matrices_dict, variability_fun, variability_m
     variability_df = pd.concat(variability_rows)
     return min_max_normalize(variability_df)
 
-def get_tissue_subgroup_resolution_distances(tissue_matrices_dict, tissue_subgroups=germ_lines):
+def get_tissue_subgroup_distances(tissue_matrices_dict, tissue_subgroups=tissue_subgroups):
     """
     # Description
     ---
@@ -233,8 +254,11 @@ def get_tissue_subgroup_resolution_distances(tissue_matrices_dict, tissue_subgro
     # Usage
     ---
     >>> data = pd.read_excel('tissue_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
-    >>> print(get_tissue_subgroup_resolution_distances(data, germ_lines))
-    ...
+    >>> print(get_tissue_subgroup_distances(data))
+    ... time      35   36   37   ...   695   696   697
+        ectoderm  1.0  1.0  1.0  ...  24.0  23.0  23.0
+        mesoderm  2.0  2.0  2.0  ...   5.0   5.0   4.0
+        endoderm  1.0  1.0  1.0  ...   9.0   9.0  10.0
     """
     distances_rows = []
     for tissues in tissue_subgroups.values():
@@ -247,7 +271,80 @@ def get_tissue_subgroup_resolution_distances(tissue_matrices_dict, tissue_subgro
     tissue_subgroups_distances.index = tissue_subgroups.keys()
     return tissue_subgroups_distances
 
+def get_cell_resolution_variability(cell_matrices_dict, embryo_cell_count=False):
+    """
+    # Description
+    ---
+    Returns a dict associating a specific dataframe of cell-resolution cell composition variability to a keyword.
+        + 'mean': mean number of cells unique to an embryo
+        + 'min': minimum number of cells unique to an embryo
+        + 'max': maximum number of cells unique to an embryo
+        + 'evenness': variability during the embryogenesis using multiple evenness indices
+        + 'distances': variability during the embryogenesis using multiple pairwise distances
 
+    # Argument(s)
+    ---
+        `cell_matrices_dict` (dict): embryo names as keys and cell-resolution cell count matrices as values.
+        `embryo_cell_count` (bool): True if the time axis is the embryo_cell_count. Returns the percentage of unique cells instead of a distance for 'mean', 'min' and 'max'.
 
-data = pd.read_excel('tissue_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
-print(get_tissue_subgroup_resolution_distances(data, germ_lines))
+    # Usage
+    ---
+    >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
+    >>> cell_resolution_variability = get_cell_resolution_variability(data, True)
+    >>> print(cell_resolution_variability['mean'])
+    ... time             35    36         37   ...       695       696       697
+        method                                 ...                                                                                
+        cityblock  12.857143  12.5  12.162162  ...  3.669065  3.591954  3.443329
+    """
+    cell_resolution_variability = {}
+    cell_resolution_variability['evenness'] = get_variability_dataframe(cell_matrices_dict, get_evenness_row, evenness_pool)
+    cell_resolution_variability['distances'] = get_variability_dataframe(cell_matrices_dict, get_distance_row, distance_pool)
+
+    for aggregate_fun in ['min', 'max', 'mean']:
+        cell_resolution_variability[aggregate_fun] = get_distance_row(cell_matrices_dict, aggregate_method=aggregate_fun)
+        if embryo_cell_count:
+            cell_resolution_variability[aggregate_fun] *= 100 / (2 * cell_resolution_variability[aggregate_fun].columns)
+            # 2 * embryo_cell_count because different divisions are counted twice with the cityblock distance
+
+    return cell_resolution_variability
+
+def get_tissue_resolution_variability(tissue_matrices_dict, embryo_cell_count=False):
+    """
+    # Description
+    ---
+    Returns a dict associating a specific dataframe of tissue-resolution cell composition variability to a keyword.
+        + 'mean': mean number of cells uniquely located in the tissues
+        + 'min': minimum number of cells uniquely located in the tissues
+        + 'max': maximum number of cells uniquely located in the tissues
+        + 'subgroup': for each subgroup, the mean number of cells uniquely located within the subgroup
+
+    # Argument(s)
+    ---
+        `tissue_matrices_dict` (dict): embryo names as keys and tissue-resolution cell count matrices as values.
+        `embryo_cell_count` (bool): True if the time axis is the embryo_cell_count. Returns the percentage of cells uniquely located in the tissues instead of distances.
+
+    # Usage
+    ---
+    >>> data = pd.read_excel('tissue_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
+    >>> tissue_resolution_variability = get_tissue_resolution_variability(data, True)
+    >>> print(tissue_resolution_variability['subgroup'])
+    ... time      35   36   37   ...   695   696   697
+        ectoderm  1.0  1.0  1.0  ...  24.0  23.0  23.0
+        mesoderm  2.0  2.0  2.0  ...   5.0   5.0   4.0
+        endoderm  1.0  1.0  1.0  ...   9.0   9.0  10.0
+    """
+    tissue_resolution_variability = {}
+    tissue_resolution_variability['subgroup'] = get_tissue_subgroup_distances(tissue_matrices_dict)
+    for aggregate_fun in ['mean', 'min', 'max']:
+        tissue_resolution_variability[aggregate_fun] = get_distance_row(tissue_matrices_dict, aggregate_method=aggregate_fun)
+
+        
+        ### Python behaves weirdly here : the variability dataframes are copies of each other. Check up later. ###
+
+    # if embryo_cell_count:
+    #     for var in tissue_resolution_variability.keys():
+    #         tissue_resolution_variability[var] *= 100 / (2 * tissue_resolution_variability[var].columns)
+    #         print(tissue_resolution_variability)
+            # 2 * embryo_cell_count because different divisions are counted twice with the cityblock distance
+
+    return tissue_resolution_variability

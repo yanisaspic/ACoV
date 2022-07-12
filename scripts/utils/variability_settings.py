@@ -48,3 +48,5 @@ germ_lines = {'ectoderm': ectoderm, 'mesoderm': mesoderm, 'endoderm': endoderm}
 epidermis = ['head epidermis', 'lateral tail epidermis', 'medio-lateral tail epidermis', 'midline tail epidermis']
 neural_plate = ['posterior ventral neural plate', 'anterior ventral neural plate', 'anterior dorsal neural plate', 'posterior lateral neural plate', 'posterior dorsal neural plate']
 ectoderm_lines = {'epidermis': epidermis, 'neural plate': neural_plate}
+
+tissue_subgroups = germ_lines
