@@ -48,7 +48,7 @@ def node_to_dict(node, data):
     """
     key = get_node_key(node)
     data[key] = {}
-    children = node.getchildren()
+    children = list(node)
     if len(children) == 0:
         data[key] = ast.literal_eval(node.text)
     else:

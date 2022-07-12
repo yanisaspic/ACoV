@@ -31,6 +31,7 @@ def parse(geometry=False):
     """
     start = time()
     xml_files = listdir('data/xml')
+    xml_files.remove('notes')
     total = len(xml_files)
     print(f'{total} .xml files ready to be parsed:')
 
@@ -57,6 +58,7 @@ def align(geometry=False):
     """
     start = time()
     xlsx_files = listdir('data/xlsx')
+    xlsx_files.remove('notes')
     total = len(xlsx_files)
     print(f'{total} .xlsx files ready to be aligned:')
 
@@ -82,6 +84,7 @@ def matrix():
     """
     start = time()
     xlsx_files = listdir('data/xlsx')
+    xlsx_files.remove('notes')
     total = len(xlsx_files)
     print(f'{total} .xlsx files ready to be matrixed:')
 
@@ -193,15 +196,17 @@ def plot():
     """
     start = time()
     print(f'Starts to plot...')
-    for file in listdir('data/mat'):
+    mat_files = listdir('data/mat')
+    mat_files.remove('notes')
+    for file in mat_files:
         plot_variability(f'data/mat/{file}')
     print(f'Plotting done in {round(time() - start)} seconds.')
-    
-def all():
+
+def all(geometry=False):
     """
     # Description
     ---
     Accomplishes all the tasks consecutively.
     """
-    preprocess()
+    preprocess(geometry)
     plot()

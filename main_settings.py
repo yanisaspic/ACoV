@@ -16,7 +16,8 @@ _______________
 task_specific_optional_arguments = {
     'parse': ['geometry'], 
     'align': ['geometry'],
-    'preprocess': ['geometry']}
+    'preprocess': ['geometry'],
+    'all': ['geometry']}
 
 
     ### command-line arguments docstrings ###
@@ -44,14 +45,14 @@ plot        Generates figures to explore the variability from the computed matri
 all         Completes the preprocess and plot tasks consecutively.
 """
 
-geometry_help = """{parse, align, preprocess}
+geometry_help = """{parse, align, preprocess, all}
 
-[parse]         Also computes implicit geometrical properties: 
-                object total surface, surface and volume ratios.
-                Greatly increases computation time
+[parse]             Also computes implicit geometrical properties: 
+                    object total surface, surface and volume ratios.
+                    Greatly increases computation time
 
-[align]         Also applies a voxelsize correction of the geometrical 
-                properties to allow the comparison between embryos.
+[align]             Also applies a voxelsize correction of the geometrical 
+                    properties to allow the comparison between embryos.
 
-[preprocess]    Completes the parse and align tasks with the geometry parameter.
+[preprocess, all]   Completes the parse and align tasks with the geometry parameter.
 """
