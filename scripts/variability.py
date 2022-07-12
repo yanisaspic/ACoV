@@ -13,8 +13,12 @@ _______________
 """
 
 
+from utils.variability_settings import *
+
 import pandas as pd
-import numpy as np
+import scipy.spatial.distance as ssd
+from itertools import combinations
+from skbio.diversity import alpha_diversity
 from mlxtend.preprocessing import TransactionEncoder
 
 
@@ -70,12 +74,40 @@ def frame_embryo_coexistence(matrices_dict):
     coexistence.index = matrices_dict.keys()
     return coexistence.loc[:, coexistence.sum()>=2]
 
-def get_distances_row(matrices_dict, pairwise_distance_method='cityblock', aggregate_distance_method='mean'):
+def get_distance_row(matrices_dict, pairwise_distance_method='cityblock', aggregate_method='mean'):
     """
     # Description
     ---
-    Returns a pandas Series corresponding to 
+    Returns a dataframe corresponding to the aggregated pairwise distances of embryo cell composition.
+    The dataframe has a single row.
+
+    # Argument(s)
+    ---
+        `matrices_dict` (dict): embryo names as keys and cell count matrices as values.
+        `pairwise_distance_method` (str): a valid ssd.pdist distance calculation method.
+        `aggregate_method` (str): one of 'mean', 'min' or 'max'.
+
+    # Usage
+    ---
+    >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
+    >>> print(get_distance_row(data))
+    ...
     """
+    pairwise_distance_rows = []
+    embryo_coexistence = frame_embryo_coexistence(matrices_dict)
+    time_points = embryo_coexistence.columns
+
+    for time in time_points:
+        embryo_pool_at_time = embryo_coexistence[embryo_coexistence[time]==1].index
+
+        for embryo_pair in combinations(embryo_pool_at_time, 2):
+            u, v = matrices_dict[embryo_pair[0]][time], matrices_dict[embryo_pair[1]][time]
+            row = {'time': time, 'distance': ssd.pdist((u, v), pairwise_distance_method), 'method': pairwise_distance_method}
+            pairwise_distance_rows.append(row)
+
+    pairwise_distance_df = pd.DataFrame.from_records(pairwise_distance_rows)
+    distance_row = pairwise_distance_df.pivot_table(values='distance', index='method', columns='time', aggfunc=aggregate_method)
+    return distance_row
 
 def get_abundance_matrix(cell_matrices_dict):
     """
@@ -92,7 +124,7 @@ def get_abundance_matrix(cell_matrices_dict):
     # Usage
     ---
     >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
-    >>> print(get_abundance_matrix(data))
+    >>> print(get_abundance_matrix(data).head())
     ...
     """
     abundance = {}
@@ -100,30 +132,122 @@ def get_abundance_matrix(cell_matrices_dict):
     time_points = embryo_coexistence.columns
 
     for binary_matrix in cell_matrices_dict.values():
-        print(abundance.get(35, np.array([0] * len(time_points))))
         for time in time_points:
-            abundance[time] = abundance.get(time, np.array([0] * len(time_points))) + np.array(binary_matrix[time])
+            try:
+                abundance[time] += binary_matrix[time]
+            except KeyError:
+                abundance[time] = binary_matrix[time]
+
     return pd.DataFrame.from_records(abundance)
 
-data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
-print(get_abundance_matrix(data))
-
-def get_evenness_row(abundance_matrix, ):
+def get_evenness_row(cell_matrices_dict, evenness_index='simpson_e'):
     """
     # Description
     ---
-    
-    """
+    Returns a dataframe corresponding to the evenness of embryo cell composition.
+    The evenness value ranges from 0 to 1.
+    A high evenness value indicates that the embryos share a similar cell composition.
+    The dataframe has a single row.
 
-def min_max_normalize_dataframe(df):
+    # Argument(s)
+    ---
+        `cell_matrices_dict` (dict): embryo names as keys and cell count matrices as values at the cell-resolution.
+        `evenness_index` (str): a valid skbio evenness index.
+
+    # Usage
+    ---
+    >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
+    >>> print(get_evenness_row(data))
+    ...
+    """
+    abundance = get_abundance_matrix(cell_matrices_dict)
+    evenness_rows = []
+    for time in abundance.columns:
+        evenness_rows.append({'time': time, 'evenness': alpha_diversity(evenness_index, abundance[time]), 'method': evenness_index})
+    evenness_df = pd.DataFrame.from_records(evenness_rows)
+    return evenness_df.pivot_table(values='evenness', index='method', columns='time')
+
+def min_max_normalize(df):
     """
     # Description
     ---
     Min-max normalize every row of a data frame.
+    X = (X - X_min) / (X_max - X_min)
+
+    # Argument(s)
+    ---
+        `df` (pandas df): a dataframe with numerical values only.
+
+    # Usage
+    ---
+    >>> dataset = [ [3, 5, 2], [4, 8, -5] ]
+    >>> df = pd.DataFrame.from_records(dataset)
+    >>> print(min_max_normalize(df))
+    ...          0    1    2
+        0  0.333333  1.0  0.0
+        1  0.692308  1.0  0.0
     """
+    df = df.T
+    for col in df:
+        df[col] = (df[col] - df[col].min()) / (df[col].max() - df[col].min())
+    return df.T
 
-data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None)
-print(get_abundance_matrix(data))
+def get_variability_dataframe(cell_matrices_dict, variability_fun, variability_methods_pool):
+    """
+    # Description
+    ---
+    Returns a min-max normalized matrix of cell composition variability.
+    The variability can be computed using distances or evenness.
+    A row is a quantification method and a column is a time in the embryo development.
 
-data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None)
-print(frame_embryo_coexistence(data))
+    # Argument(s)
+    ---
+        `cell_matrices_dict` (dict): embryo names as keys and cell-resolution cell count matrices as values.
+        `variability_fun` (fun): get_evenness_row or get_distance_row
+        `variability_methods_pool` (list of str): valid quantification methods (i.e. ssd.pdist distances or skbio evenness indices).
+
+    # Usage
+    ---
+    >>> data = pd.read_excel('cell_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
+    >>> print(get_variability_dataframe(data, get_distance_row, pairwise_distance_pool).head())
+    ...
+    """
+    variability_rows = []
+    for method in variability_methods_pool:
+        variability_rows.append(variability_fun(cell_matrices_dict, method))
+    variability_df = pd.concat(variability_rows)
+    return min_max_normalize(variability_df)
+
+def get_tissue_subgroup_resolution_distances(tissue_matrices_dict, tissue_subgroups=germ_lines):
+    """
+    # Description
+    ---
+    Returns a matrix quantifying the variability due to specific subtissues (e.g. germ lines).
+    A row is a subtissue and a column is a time in the embryo development.
+
+    # Argument(s)
+    ---
+        `tissue_matrices_dict` (dict): embryo names as keys and tissue-resolution cell count matrices as values.
+        `tissue_subgroups` (dict): tissues subgroups names as keys and list of included tissues as values.
+
+    # Usage
+    ---
+    >>> data = pd.read_excel('tissue_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
+    >>> print(get_tissue_subgroup_resolution_distances(data, germ_lines))
+    ...
+    """
+    distances_rows = []
+    for tissues in tissue_subgroups.values():
+        tmp_dict = tissue_matrices_dict.copy()
+        for embryo_name, matrix in tmp_dict.items():
+            tmp_dict[embryo_name] = matrix.loc[tissues]
+        distances_rows.append(get_distance_row(tmp_dict))
+
+    tissue_subgroups_distances = pd.concat(distances_rows)
+    tissue_subgroups_distances.index = tissue_subgroups.keys()
+    return tissue_subgroups_distances
+
+
+
+data = pd.read_excel('tissue_ecc.xlsx', engine='openpyxl', sheet_name=None, index_col=0)
+print(get_tissue_subgroup_resolution_distances(data, germ_lines))
