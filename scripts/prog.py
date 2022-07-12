@@ -196,3 +196,12 @@ def plot():
     for file in listdir('data/mat'):
         plot_variability(f'data/mat/{file}')
     print(f'Plotting done in {round(time() - start)} seconds.')
+    
+def all():
+    """
+    # Description
+    ---
+    Accomplishes all the tasks consecutively.
+    """
+    preprocess()
+    plot()
